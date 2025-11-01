@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Back-and-Forth Chat</title>
+</head>
+<body>
+    <h1>Chat Between {{ users[0] }} and {{ users[1] }}</h1>
+
+    <form method="POST">
+        <label>Select Sender:</label>
+        <select name="sender">
+            {% for user in users %}
+            <option value="{{ user }}">{{ user }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <label>Message:</label><br>
+        <textarea name="message" rows="4" cols="50" required></textarea>
+        <br><br>
+        <button type="submit">Send</button>
+    </form>
+
+    <h2>Conversation</h2>
+    <ul>
+        {% for msg in messages %}
+            <li>
+                <strong>{{ msg.sender }} → {{ msg.receiver }}</strong>:
+                {{ msg.message }}
+                <em>({{ msg.timestamp }})</em>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

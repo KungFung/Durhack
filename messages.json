@@ -1,0 +1,14 @@
+[
+    {
+        "sender": "Joe",
+        "receiver": "Mama",
+        "message": "Hello",
+        "timestamp": "2025-11-01 15:24:39"
+    },
+    {
+        "sender": "User2",
+        "receiver": "User1",
+        "message": "Hello",
+        "timestamp": "2025-11-01 15:29:03"
+    }
+]
