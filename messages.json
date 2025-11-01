@@ -1,1 +1,8 @@
-[]
+[
+    {
+        "sender": "User1",
+        "receiver": "User2",
+        "message": "jyf",
+        "timestamp": "2025-11-01 18:38:24"
+    }
+]
