@@ -46,7 +46,11 @@ for index, row in df.iterrows():
 
     prev_time = message_time
 
+with open("results.txt", "w") as f:
+    f.write(str(total_response_time/message_count) + "\n")
+    f.write(str(relationship_score / message_count))
+
 print("Average Response Time: ")
 print(total_response_time/message_count)
 
-print(relationship_score)
+print(relationship_score / message_count)
