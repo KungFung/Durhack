@@ -28,5 +28,11 @@
         "receiver": "User1",
         "message": "scfeertr",
         "timestamp": "2025-11-01 16:14:51"
+    },
+    {
+        "sender": "User2",
+        "receiver": "User1",
+        "message": "I hate you!",
+        "timestamp": "2025-11-01 16:28:33"
     }
 ]
