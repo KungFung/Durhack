@@ -101,9 +101,44 @@
     }
     .actions .left { display: flex; gap: 8px; align-items: center; }
 
+    /* --- NEW CSS FOR PREDICTION SECTION --- */
+    .aside-content {
+      position: relative; /* Establish context for absolute positioning */
+      height: 100%; /* Ensure the card takes its full height */
+      display: flex;
+      flex-direction: column;
+    }
+    .prediction-result {
+      position: absolute; /* Position relative to .aside-content */
+      bottom: 0;
+      right: 0;
+      padding: 10px 18px; /* Padding matches the card padding */
+      margin: 0;
+      width: 100%;
+      text-align: right;
+      font-size: 1.1rem;
+      color: var(--muted);
+      border-top: 1px solid #e6edf3; /* Separator line */
+      background: var(--card); /* Match card background */
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      font-weight: 600;
+    }
+    /* Push form content up to make space for the fixed footer/prediction */
+    .aside-card {
+      padding-bottom: 70px; /* Make space for the absolute-positioned footer/prediction */
+      height: 100%;
+    }
+    /* Make form take remaining space */
+    .message-form-wrapper { flex-grow: 1; }
+    /* --- END NEW CSS --- */
+
+
     @media (max-width: 920px) {
       .container { grid-template-columns: 1fr; }
       .conversation { height: 420px; }
+      .aside-card { padding-bottom: 18px; } /* Reset padding for smaller screens if prediction is below */
+      .prediction-result { position: static; border-top: none; }
     }
   </style>
 </head>
@@ -113,7 +148,7 @@
       <div class="card">
         <h1>Chat Between <strong>{{ users[0] }}</strong> and <strong>{{ users[1] }}</strong></h1>
         <p style="margin:6px 0 0 0; color:var(--muted); font-size:0.95rem">
-          Select a sender & receiver, type a message and press Send.  
+          Select a sender & receiver, type a message and press Send.
           Use <em>Clear chat</em> to delete all messages.
         </p>
       </div>
@@ -149,49 +184,61 @@
       </div>
     </main>
 
-    <aside class="card">
-      <form method="POST" action="{{ url_for('index') }}">
-        <div>
-          <label for="sender">Sender</label>
-          <select id="sender" name="sender" required>
-            {% for user in users %}
-            <option value="{{ user }}">{{ user }}</option>
-            {% endfor %}
-          </select>
+    <aside class="card aside-card">
+      <div class="aside-content">
+        <div class="message-form-wrapper">
+          <form method="POST" action="{{ url_for('index') }}">
+            <div>
+              <label for="sender">Sender</label>
+              <select id="sender" name="sender" required>
+                {% for user in users %}
+                <option value="{{ user }}">{{ user }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div>
+              <label for="receiver">Receiver</label>
+              <select id="receiver" name="receiver" required>
+                {% for user in users %}
+                <option value="{{ user }}">{{ user }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div>
+              <label for="message">Message</label>
+              <textarea id="message" name="message" rows="6" required placeholder="Write a short message..."></textarea>
+            </div>
+
+
+            <div class="actions">
+              <div class="left">
+                <button class="btn-primary" type="submit">Send</button>
+                <button class="btn-danger"
+                        type="submit"
+                        formmethod="post"
+                        formaction="{{ url_for('clear') }}"
+                        formnovalidate
+                        onclick="return confirm('Delete all messages? This cannot be undone.');">
+                  Clear chat
+                </button>
+              </div>
+              <div style="color:var(--muted); font-size:0.85rem">
+                Messages: <strong>{{ messages|length }}</strong>
+              </div>
+            </div>
+          </form>
         </div>
 
-        <div>
-          <label for="receiver">Receiver</label>
-          <select id="receiver" name="receiver" required>
-            {% for user in users %}
-            <option value="{{ user }}">{{ user }}</option>
-            {% endfor %}
-          </select>
+        <div class="prediction-result">
+          <span style="color:#111827;">Predicted Duration:</span>
+          <span style="color:var(--accent); font-weight: 800; font-size: 1.25rem;">
+            {{ predicted_duration }}
+          </span>
+          months
         </div>
-
-        <div>
-          <label for="message">Message</label>
-          <textarea id="message" name="message" rows="6" required placeholder="Write a short message..."></textarea>
-        </div>
-
-        <div class="actions">
-          <div class="left">
-            <button class="btn-primary" type="submit">Send</button>
-            <!-- Clear chat button -->
-            <button class="btn-danger"
-                    type="submit"
-                    formmethod="post"
-                    formaction="{{ url_for('clear') }}"
-                    formnovalidate
-                    onclick="return confirm('Delete all messages? This cannot be undone.');">
-              Clear chat
-            </button>
-          </div>
-          <div style="color:var(--muted); font-size:0.85rem">
-            Messages: <strong>{{ messages|length }}</strong>
-          </div>
-        </div>
-      </form>
+      </div>
     </aside>
   </div>
 
