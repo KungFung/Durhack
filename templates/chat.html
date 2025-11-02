@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Back-and-Forth Chat</title>
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
       --accent: #2563eb;
       --danger: #ef4444;
       --sent: #dcf8c6;
-      --recv: #ffffff;
+      --recv: #609ee1;
     }
     * { box-sizing: border-box; }
     body {
@@ -102,41 +102,38 @@
     .actions .left { display: flex; gap: 8px; align-items: center; }
 
     .aside-content {
-      position: relative; /* Establish context for absolute positioning */
-      height: 100%; /* Ensure the card takes its full height */
+      position: relative;
+      height: 100%;
       display: flex;
       flex-direction: column;
     }
     .prediction-result {
-      position: absolute; /* Position relative to .aside-content */
+      position: absolute;
       bottom: 0;
       right: 0;
-      padding: 10px 18px; /* Padding matches the card padding */
+      padding: 10px 18px;
       margin: 0;
       width: 100%;
       text-align: right;
       font-size: 1.1rem;
       color: var(--muted);
-      border-top: 1px solid #e6edf3; /* Separator line */
-      background: var(--card); /* Match card background */
+      border-top: 1px solid #e6edf3;
+      background: var(--card);
       border-bottom-left-radius: 12px;
       border-bottom-right-radius: 12px;
       font-weight: 600;
     }
-    /* Push form content up to make space for the fixed footer/prediction */
     .aside-card {
-      padding-bottom: 10px; /* Make space for the absolute-positioned footer/prediction */
+      padding-bottom: 10px;
       height: 100%;
     }
-    /* Make form take remaining space */
     .message-form-wrapper { flex-grow: 1; }
-    /* --- END NEW CSS --- */
 
 
     @media (max-width: 920px) {
       .container { grid-template-columns: 1fr; }
       .conversation { height: 420px; }
-      .aside-card { padding-bottom: 18px; } /* Reset padding for smaller screens if prediction is below */
+      .aside-card { padding-bottom: 18px; }
       .prediction-result { position: static; border-top: none; }
     }
   </style>
@@ -162,10 +159,11 @@
           </div>
         {% endif %}
         {% for msg in messages %}
-          {% if msg.sender == users[0] %}
+          {# Check if the message's sender matches the current logged-in user #}
+          {% if msg.user == current_user %}
             <div class="message sent">
               <div class="meta">
-                <strong>{{ msg.sender }}</strong> → {{ msg.receiver }} ·
+                {# Sender side doesn't need to show sender/receiver names #}
                 <span style="color:var(--muted)">{{ msg.timestamp }}</span>
               </div>
               <div class="text">{{ msg.message }}</div>
@@ -173,7 +171,8 @@
           {% else %}
             <div class="message received">
               <div class="meta">
-                <strong>{{ msg.sender }}</strong> → {{ msg.receiver }} ·
+                {# Receiver side shows the sender's name #}
+                <strong>{{ msg.user }}</strong> ·
                 <span style="color:var(--muted)">{{ msg.timestamp }}</span>
               </div>
               <div class="text">{{ msg.message }}</div>
@@ -239,25 +238,7 @@
 
     // Prevent selecting same sender/receiver
     (function(){
-      var sender = document.getElementById('sender');
-      var receiver = document.getElementById('receiver');
-      function sync() {
-        for (var i=0; i<receiver.options.length; i++){
-          receiver.options[i].disabled = receiver.options[i].value === sender.value;
-        }
-        if (receiver.value === sender.value) {
-          for (var j=0; j<receiver.options.length; j++){
-            if (!receiver.options[j].disabled) {
-              receiver.value = receiver.options[j].value;
-              break;
-            }
-          }
-        }
-      }
-      if (sender && receiver) {
-        sender.addEventListener('change', sync);
-        window.addEventListener('load', sync);
-      }
+      // NOTE: This logic is now obsolete as user selection is handled by the Flask session.
     })();
   </script>
 </body>

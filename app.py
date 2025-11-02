@@ -99,6 +99,7 @@ def load_messages():
         chat_key = session.get('chat_key')
         # 1. Call the function that retrieves and formats data from Firestore
         all_messages = Firebase.load_as_json(chat_key)
+        print(all_messages)
 
         # 2. Return the list directly (it's already in the desired dictionary format)
         return all_messages
