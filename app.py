@@ -24,13 +24,14 @@ def load_messages():
     with open(MESSAGE_FILE, 'r') as f:
         return json.load(f)
 
-def save_message(sender, receiver, message):
+def save_message(sender, receiver, message, time):
     messages = load_messages()
     messages.append({
         "sender": sender,
         "receiver": receiver,
         "message": message,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "time": time
     })
     with open(MESSAGE_FILE, 'w') as f:
         json.dump(messages, f, indent=4)
@@ -75,6 +76,10 @@ def get_duration():
         if df.empty:
             return 0
 
+        df['time'] = pd.to_numeric(df['time'], errors='coerce').fillna(0)
+
+        # Step 2: Calculate the total sum
+        total_time = df['time'].sum()
 
 
 
@@ -91,6 +96,7 @@ def get_duration():
         temp_prev_time = temp_prev_time.replace(tzinfo=timezone.utc)
         prev_time = int(temp_prev_time.timestamp())
 
+
         for index, row in df.iterrows():
             message_count += 1
             relationship_score += sia.polarity_scores(df['message'][index])["compound"]
@@ -104,12 +110,15 @@ def get_duration():
 
             prev_time = message_time
 
+
+
         with open("results.txt", "w") as f:
-            f.write(str(total_response_time / message_count) + "\n")
+            f.write(str(total_time / message_count) + "\n")
             f.write(str(relationship_score / message_count))
 
-
-        response = total_response_time / message_count
+        print(total_time)
+        response = total_time / message_count
+        response = int(response)
 
         sentiment = relationship_score / message_count
 
@@ -125,9 +134,10 @@ def index():
         sender = request.form.get('sender')
         receiver = request.form.get('receiver')
         message = request.form.get('message', '').strip()
+        time = request.form.get('time')
         if sender in USERS and receiver in USERS and sender != receiver and message:
             # 1. Message is SAVED to the file
-            save_message(sender, receiver, message)
+            save_message(sender, receiver, message, time)
 
             # 2. Flask redirects, forcing the browser to send a new GET request
         return redirect(url_for('index'))
