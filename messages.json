@@ -1,19 +1,11 @@
 [
     {
-        "sender": "Joe",
-        "receiver": "Mama",
-        "message": "Hello",
-        "timestamp": "2025-11-01 15:24:39"
-    },
-    {
-        "sender": "User2",
-        "receiver": "User1",
-        "message": "Hello",
-        "timestamp": "2025-11-01 15:29:03"
-    },
-    {
         "sender": "User1",
         "receiver": "User2",
+<<<<<<< HEAD
+        "message": "I love you",
+        "timestamp": "2025-11-01 23:31:57"
+=======
         "message": "test",
         "timestamp": "2025-11-01 16:07:15"
     },
@@ -34,5 +26,6 @@
         "receiver": "User1",
         "message": "I don't hate you!",
         "timestamp": "2025-11-01 16:28:33"
+>>>>>>> refs/remotes/origin/main
     }
 ]
