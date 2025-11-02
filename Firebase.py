@@ -58,7 +58,7 @@ def load_as_json(chat_key):
         messages_ref = db.collection(collection_path)
 
         # Sort by 'time' to keep messages in order
-        docs = messages_ref.order_by('time').stream()
+        docs = messages_ref.order_by('datetime').stream()
 
         message_list = []
         for doc in docs:
