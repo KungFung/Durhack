@@ -205,7 +205,30 @@ def get_duration():
         model = train_model()
         new_data_point = np.array([[response, sentiment]])
         predict = model.predict(new_data_point)
-        return predict
+        predict = float(predict)
+        if predict>12:
+            value = "over 1 year left"
+            return value
+        else:
+            months = int(predict)
+            days_fraction = predict - months
+            days = round(days_fraction * 30)
+            if days >= 30:
+                months += 1
+                days = 0
+
+            month_str = f"{months} month{'s' if months != 1 else ''}"
+            day_str = f"{days} day{'s' if days != 1 else ''}"
+
+            if months == 0 and days > 0:
+                return day_str
+            elif months > 0 and days == 0:
+                return month_str
+
+            return f"{month_str} and {day_str}"
+
+
+
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -257,7 +280,10 @@ def chat_room():
         if message:
             # Use current_user (from session) as sender, and chat_key (from session) to save
             # We pass None for time to use the Firestore SERVER_TIMESTAMP
-            Firebase.save_message(current_user, message, time, chat_key)
+            predicted_duration = get_duration()
+            Firebase.save_message(current_user, message, time,chat_key)
+
+
 
         # Redirect (POST-redirect-GET pattern) to prevent double submissions
         return redirect(url_for('chat_room'))
@@ -265,6 +291,10 @@ def chat_room():
     # GET request logic: Display chat history
     messages = load_messages()
     predicted_duration = get_duration()
+    Firebase.save_sentiment(predicted_duration, chat_key)
+
+
+
 
     # FIX 2: Create the 'users' list as expected by the chat.html template
     users = [current_user, target_user]
