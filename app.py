@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import json
 from datetime import datetime
 import os
@@ -10,10 +10,13 @@ from datetime import datetime, timezone
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
-
+import Firebase
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 app = Flask(__name__)
 MESSAGE_FILE = 'messages.json'
 DEFAULT_USERS = ['User1', 'User2']
+
+app.secret_key = 'super_secret_chat_key_for_testing'
 
 
 def _msg_timestamp_to_epoch(msg: dict) -> int:
@@ -83,24 +86,28 @@ def _write_json_file(path, data):
 if not os.path.exists(MESSAGE_FILE):
     _write_json_file(MESSAGE_FILE, [])
 
+
 def load_messages():
-    # Try reading as UTF-8 first; if it fails, try common Windows encodings then fallback
+    """
+    Retrieves all messages from the Firestore 'Messages' collection
+    and returns them as a list of Python dictionaries (JSON-like structure).
+
+    Returns:
+        list: A list of message dictionaries, or an empty list if an error occurs.
+    """
     try:
-        with open(MESSAGE_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except UnicodeDecodeError:
-        # Try other encodings
-        with open(MESSAGE_FILE, 'rb') as f:
-            raw = f.read()
-        for enc in ('utf-8', 'utf-8-sig', 'cp1252', 'latin-1'):
-            try:
-                text = raw.decode(enc)
-                return json.loads(text)
-            except Exception:
-                continue
-        # Last resort: decode with replacement to avoid crash
-        text = raw.decode('utf-8', errors='replace')
-        return json.loads(text)
+        chat_key = session.get('chat_key')
+        # 1. Call the function that retrieves and formats data from Firestore
+        all_messages = Firebase.load_as_json(chat_key)
+
+        # 2. Return the list directly (it's already in the desired dictionary format)
+        return all_messages
+
+    except Exception as e:
+        # Handle any potential Firestore connection or query errors
+        print(f"❌ Error loading messages from Firestore: {e}")
+        # In case of failure, return an empty list or handle as appropriate for your Flask app
+        return []
 
 
 def get_users():
@@ -144,6 +151,17 @@ def save_message(sender, receiver, message, time):
 def clear_messages():
     _write_json_file(MESSAGE_FILE, [])
 
+def get_vader_compound_score(text):
+    analyzer = SentimentIntensityAnalyzer()
+
+    if isinstance(text, str):
+        # Only call VADER if the input is definitely a string
+        vs = analyzer.polarity_scores(text)
+        return vs['compound']
+    else:
+        # Return a neutral score (or NaN) for missing/non-text data
+        return 0.0 # You could also use np.nan instead of 0.0
+
 def train_model():
     file_path = 'data3.csv'
     df = pd.read_csv(file_path)
@@ -164,15 +182,6 @@ def train_model():
 
 def get_duration():
 
-        # Download the VADER lexicon (needed once)
-        nltk.download('vader_lexicon')
-
-        sia = SentimentIntensityAnalyzer()
-
-
-
-
-        # Option 2: Read with json module first (safer for lists of dicts)
         data = load_messages()
 
         df = pd.DataFrame(data)
@@ -183,44 +192,15 @@ def get_duration():
 
         # Step 2: Calculate the total sum
         total_time = df['time'].sum()
+        df['sentiment'] = df['message'].apply(get_vader_compound_score)
+        total_sentiment = df['sentiment'].sum()
+        len(df)
 
 
-        message = "I killed your dog!"
-
-        score = sia.polarity_scores(df['message'][0])
-        print(score)
-
-        relationship_score = 0
-        total_response_time = 0
-        message_count = 0
-
-        temp_prev_time = datetime.strptime(df['timestamp'][0], "%Y-%m-%d %H:%M:%S")
-        temp_prev_time = temp_prev_time.replace(tzinfo=timezone.utc)
-        prev_time = int(temp_prev_time.timestamp())
-
-
-        for index, row in df.iterrows():
-            message_count += 1
-            relationship_score += sia.polarity_scores(df['message'][index])["compound"]
-
-            dt = datetime.strptime(df['timestamp'][index], "%Y-%m-%d %H:%M:%S")
-            dt = dt.replace(tzinfo=timezone.utc)
-
-            message_time = int(dt.timestamp())
-
-            total_response_time += message_time - prev_time
-
-            prev_time = message_time
-
-        with open("results.txt", "w", encoding='utf-8') as f:
-            f.write(str(total_response_time / message_count) + "\n")
-            f.write(str(relationship_score / message_count))
-
-        print(total_time)
-        response = total_time / message_count
+        response = total_time / len(df)
         response = int(response)
 
-        sentiment = relationship_score / message_count
+        sentiment = total_sentiment / len(df)
 
         model = train_model()
         new_data_point = np.array([[response, sentiment]])
@@ -229,29 +209,75 @@ def get_duration():
 
 
 @app.route('/', methods=['GET', 'POST'])
-def index():
-    users = get_users()
+def login():
+    """Handles the login form submission to set up the chat key."""
     if request.method == 'POST':
-        sender = request.form.get('sender')
-        receiver = request.form.get('receiver')
+        # 1. Get user inputs
+        current_user = request.form['current_user'].strip().lower()
+        target_user = request.form['target_user'].strip().lower()
+
+        if not current_user or not target_user:
+            return render_template('login.html', error="Both usernames are required.")
+
+        # 2. Create the unique chat key
+        # Sorting ensures that ('alice', 'bob') and ('bob', 'alice') result in the same key: 'alice_bob'
+        sorted_users = sorted([current_user, target_user])
+        chat_key = f"{sorted_users[0]}_{sorted_users[1]}"
+
+        # 3. Store the keys in the session
+        session['current_user'] = current_user
+        session['target_user'] = target_user
+        session['chat_key'] = chat_key
+
+        print(f"Generated Chat Key: {chat_key}")
+
+        # 4. Redirect to the chat page
+        return redirect(url_for('chat_room'))
+
+    # Display the form on GET request
+    return render_template('login.html')
+
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat_room():
+    """Displays the main chat page and handles message submission."""
+    current_user = session.get('current_user')
+    target_user = session.get('target_user')  # FIX 1: Retrieve target_user
+    chat_key = session.get('chat_key')
+
+    if not chat_key:
+        # If no key is set, redirect back to login
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # Retrieve the message content from the form
         message = request.form.get('message', '').strip()
         time = request.form.get('time')
-        if sender in users and receiver in users and sender != receiver and message:
-            # 1. Message is SAVED to the file
-            save_message(sender, receiver, message, time)
 
-        # 2. Redirect (POST-redirect-GET)
-        return redirect(url_for('index'))
-    predicted_duration = get_duration()
+        if message:
+            # Use current_user (from session) as sender, and chat_key (from session) to save
+            # We pass None for time to use the Firestore SERVER_TIMESTAMP
+            Firebase.save_message(current_user, message, time, chat_key)
+
+        # Redirect (POST-redirect-GET pattern) to prevent double submissions
+        return redirect(url_for('chat_room'))
+
+    # GET request logic: Display chat history
     messages = load_messages()
-    # Sort messages by timestamp ascending so conversation reads oldest -> newest
-    try:
-        messages = sorted(messages, key=_msg_timestamp_to_epoch)
-    except Exception:
-        # If sorting fails, leave original order
-        pass
-    return render_template('index.html', users=users, messages=messages, predicted_duration=predicted_duration)
+    predicted_duration = get_duration()
 
+    # FIX 2: Create the 'users' list as expected by the chat.html template
+    users = [current_user, target_user]
+
+    # We remove the usage of undeclared functions like get_users(), get_duration(), and _msg_timestamp_to_epoch
+    # as messages are already sorted by 'time' in get_all_messages_as_json_list().
+
+    return render_template('chat.html',
+                           current_user=current_user,
+                           chat_key=chat_key,
+                           messages=messages,
+                           users=users,
+                           predicted_duration=predicted_duration)  # FIX 3: Pass the 'users' list to the template
 @app.route('/clear', methods=['POST'])
 def clear():
     clear_messages()

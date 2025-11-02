@@ -1,16 +1,1 @@
-[
-    {
-        "sender": "User1",
-        "receiver": "User2",
-        "message": "I hate you",
-        "timestamp": "2025-11-02 01:45:08",
-        "time": "5"
-    },
-    {
-        "sender": "User1",
-        "receiver": "User2",
-        "message": "I hate you",
-        "timestamp": "2025-11-02 01:45:17",
-        "time": "100000"
-    }
-]
+[]

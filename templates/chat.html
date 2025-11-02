@@ -186,24 +186,8 @@
     <aside class="card aside-card">
       <div class="aside-content">
         <div class="message-form-wrapper">
-          <form method="POST" action="{{ url_for('index') }}">
-            <div>
-              <label for="sender">Sender</label>
-              <select id="sender" name="sender" required>
-                {% for user in users %}
-                <option value="{{ user }}">{{ user }}</option>
-                {% endfor %}
-              </select>
-            </div>
+          <form method="POST" action="{{ url_for('chat_room') }}">
 
-            <div>
-              <label for="receiver">Receiver</label>
-              <select id="receiver" name="receiver" required>
-                {% for user in users %}
-                <option value="{{ user }}">{{ user }}</option>
-                {% endfor %}
-              </select>
-            </div>
 
 
             <div>
