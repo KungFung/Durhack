@@ -198,6 +198,7 @@ def get_duration():
         temp_prev_time = temp_prev_time.replace(tzinfo=timezone.utc)
         prev_time = int(temp_prev_time.timestamp())
 
+
         for index, row in df.iterrows():
             message_count += 1
             relationship_score += sia.polarity_scores(df['message'][index])["compound"]
@@ -218,7 +219,6 @@ def get_duration():
         print(total_time)
         response = total_time / message_count
         response = int(response)
-
 
         sentiment = relationship_score / message_count
 
