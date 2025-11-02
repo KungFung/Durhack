@@ -207,26 +207,31 @@ def get_duration():
         new_data_point = np.array([[response, sentiment]])
         predict = model.predict(new_data_point)
         predict = float(predict)
-        if predict>12:
-            value = "over 1 year left"
-            return value
-        else:
-            months = int(predict)
-            days_fraction = predict - months
-            days = round(days_fraction * 30)
-            if days >= 30:
-                months += 1
-                days = 0
+        total_months = int(predict)
+        days_fraction = predict - total_months
 
-            month_str = f"{months} month{'s' if months != 1 else ''}"
-            day_str = f"{days} day{'s' if days != 1 else ''}"
+        # 2. Calculate remaining days (using average 30 days/month)
+        days = round(days_fraction * 30.44)
 
-            if months == 0 and days > 0:
-                return day_str
-            elif months > 0 and days == 0:
-                return month_str
+        # 3. Adjust months and days if days exceed a month
+        if days >= 30:
+            total_months += 1
+            days = 0  # Simple reset for simplicity
 
-            return f"{month_str} and {day_str}"
+        # 4. Calculate years and remaining months
+        years = total_months // 12
+        months = total_months % 12
+
+        # 5. Build the final string
+        parts = []
+
+        if years > 0:
+            parts.append(f"{years} year{'s' if years != 1 else ''}")
+        if months > 0:
+            parts.append(f"{months} month{'s' if months != 1 else ''}")
+        if days > 0:
+            parts.append(f"{days} day{'s' if days != 1 else ''}")
+        return ", ".join(parts) if parts else "Less than a day"
 
 
 
