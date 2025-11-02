@@ -101,7 +101,6 @@
     }
     .actions .left { display: flex; gap: 8px; align-items: center; }
 
-    /* --- NEW CSS FOR PREDICTION SECTION --- */
     .aside-content {
       position: relative; /* Establish context for absolute positioning */
       height: 100%; /* Ensure the card takes its full height */
@@ -126,7 +125,7 @@
     }
     /* Push form content up to make space for the fixed footer/prediction */
     .aside-card {
-      padding-bottom: 70px; /* Make space for the absolute-positioned footer/prediction */
+      padding-bottom: 10px; /* Make space for the absolute-positioned footer/prediction */
       height: 100%;
     }
     /* Make form take remaining space */
@@ -209,11 +208,11 @@
 
             <div>
               <label for="message">Message</label>
-              <textarea id="message" name="message" rows="6" required placeholder="Write a short message..."></textarea>
+              <textarea id="message" name="message" style="resize: none; height: 100px;"  rows="6" required placeholder="Write a short message..."></textarea>
             </div>
           <div>
               <label for="time">Time</label>
-              <textarea id="time" name="time" rows="6" required placeholder="Input the response"></textarea>
+              <textarea id="time" name="time" rows="6" style="resize: none; height: 50px;" required placeholder="Input the response"></textarea>
             </div>
 
 
