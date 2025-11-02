@@ -1,149 +1,89 @@
 from flask import Flask, render_template, request, redirect, url_for
-import json
+from flask_socketio import SocketIO, join_room, emit
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-import os
-import nltk
-import pandas as pd
-import json
-from nltk.sentiment import SentimentIntensityAnalyzer
-from datetime import datetime, timezone
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-import numpy as np
+import uuid
 
+# --- App setup ---
 app = Flask(__name__)
-MESSAGE_FILE = 'messages.json'
+app.config['SECRET_KEY'] = 'change-me'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 USERS = ['User1', 'User2']
 
-# Ensure message file exists
-if not os.path.exists(MESSAGE_FILE):
-    with open(MESSAGE_FILE, 'w') as f:
-        json.dump([], f)
 
-def load_messages():
-    with open(MESSAGE_FILE, 'r') as f:
-        return json.load(f)
+# --- Database Model ---
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    room = db.Column(db.String(50), nullable=False)
+    sender = db.Column(db.String(50), nullable=False)
+    receiver = db.Column(db.String(50), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.String(50), nullable=False)
 
-def save_message(sender, receiver, message):
-    messages = load_messages()
-    messages.append({
-        "sender": sender,
-        "receiver": receiver,
-        "message": message,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-    with open(MESSAGE_FILE, 'w') as f:
-        json.dump(messages, f, indent=4)
-
-def clear_messages():
-    with open(MESSAGE_FILE, 'w') as f:
-        json.dump([], f, indent=4)
-
-def train_model():
-    file_path = 'data3.csv'
-    df = pd.read_csv(file_path)
-    df['Response Time seconds'] = df['Response Time'] * 60 * 60
-
-    # Drop the original 'Hours' column if you no longer need it
-    df = df.drop(columns=['Response Time'])
-    features = [
-        'Response Time seconds',
-        'Sentiment',
-    ]
-    X = df[features]
-    y = df['Relationship Duration']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    return model
-
-def get_duration():
-
-        # Download the VADER lexicon (needed once)
-        nltk.download('vader_lexicon')
-
-        sia = SentimentIntensityAnalyzer()
+    def as_dict(self):
+        return {
+            "sender": self.sender,
+            "receiver": self.receiver,
+            "message": self.message,
+            "timestamp": self.timestamp
+        }
 
 
+with app.app_context():
+    db.create_all()
 
 
-        # Option 2: Read with json module first (safer for lists of dicts)
-        with open("messages.json", 'r') as f:
-            data = json.load(f)
-
-        df = pd.DataFrame(data)
-        if df.empty:
-            return 0
-
+# --- Routes ---
+@app.route('/')
+def home():
+    """Create a new chat room and redirect"""
+    room_id = uuid.uuid4().hex[:8]
+    return redirect(url_for('room', room_id=room_id))
 
 
-
-        message = "I killed your dog!"
-
-        score = sia.polarity_scores(df['message'][0])
-        print(score)
-
-        relationship_score = 0
-        total_response_time = 0
-        message_count = 0
-
-        temp_prev_time = datetime.strptime(df['timestamp'][0], "%Y-%m-%d %H:%M:%S")
-        temp_prev_time = temp_prev_time.replace(tzinfo=timezone.utc)
-        prev_time = int(temp_prev_time.timestamp())
-
-        for index, row in df.iterrows():
-            message_count += 1
-            relationship_score += sia.polarity_scores(df['message'][index])["compound"]
-
-            dt = datetime.strptime(df['timestamp'][index], "%Y-%m-%d %H:%M:%S")
-            dt = dt.replace(tzinfo=timezone.utc)
-
-            message_time = int(dt.timestamp())
-
-            total_response_time += message_time - prev_time
-
-            prev_time = message_time
-
-        with open("results.txt", "w") as f:
-            f.write(str(total_response_time / message_count) + "\n")
-            f.write(str(relationship_score / message_count))
+@app.route('/r/<room_id>')
+def room(room_id):
+    """Render chat interface for this room"""
+    messages = Message.query.filter_by(room=room_id).all()
+    return render_template('index.html', users=USERS, messages=messages, room_id=room_id)
 
 
-        response = total_response_time / message_count
-
-        sentiment = relationship_score / message_count
-
-        model = train_model()
-        new_data_point = np.array([[response, sentiment]])
-        predict = model.predict(new_data_point)
-        return predict
+# --- Socket.IO events ---
+@socketio.on('join')
+def on_join(data):
+    room = data['room']
+    join_room(room)
+    emit('status', {'msg': f"{data['user']} joined the room."}, room=room)
 
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        sender = request.form.get('sender')
-        receiver = request.form.get('receiver')
-        message = request.form.get('message', '').strip()
-        if sender in USERS and receiver in USERS and sender != receiver and message:
-            # 1. Message is SAVED to the file
-            save_message(sender, receiver, message)
+@socketio.on('send_message')
+def handle_message(data):
+    room = data['room']
+    msg = Message(
+        room=room,
+        sender=data['sender'],
+        receiver=data['receiver'],
+        message=data['message'],
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    db.session.add(msg)
+    db.session.commit()
+    emit('new_message', msg.as_dict(), room=room)
 
-            # 2. Flask redirects, forcing the browser to send a new GET request
-        return redirect(url_for('index'))
-    predicted_duration = get_duration()
-    messages = load_messages()
-    return render_template('index.html', users=USERS, messages=messages, predicted_duration=predicted_duration)
 
-@app.route('/clear', methods=['POST'])
-def clear():
-    clear_messages()
-    return redirect(url_for('index'))
+@socketio.on('clear_room')
+def clear_room(data):
+    room = data['room']
+    Message.query.filter_by(room=room).delete()
+    db.session.commit()
+    emit('cleared', room=room)
 
-# Prevent favicon 404s in debug
-@app.route('/favicon.ico')
-def favicon():
-    return ('', 204)
 
+# --- Main ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)

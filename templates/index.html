@@ -3,143 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Back-and-Forth Chat</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <title>Real-Time Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #f6f8fb;
-      --card: #ffffff;
-      --muted: #6b7280;
-      --accent: #2563eb;
-      --danger: #ef4444;
-      --sent: #dcf8c6;
-      --recv: #ffffff;
-    }
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-      background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 100%);
-      margin: 0;
-      padding: 24px;
-      color: #111827;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 24px;
-      align-items: start;
-    }
-    header { grid-column: 1 / -1; margin-bottom: 6px; }
-    h1 { margin: 0 0 6px 0; font-size: 1.25rem; }
-    .card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 18px;
-      box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
-    }
-
-    .conversation {
-      height: 520px;
-      overflow: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .message {
-      max-width: 78%;
-      padding: 12px 14px;
-      border-radius: 12px;
-      box-shadow: 0 1px 0 rgba(15,23,42,0.04);
-      align-self: flex-start;
-    }
-    .message .meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
-    .message.sent {
-      background: var(--sent);
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
-    }
-    .message.received {
-      background: var(--recv);
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
-    }
-    .message .text { white-space: pre-wrap; color: #0f172a; }
-
-    form { display: flex; flex-direction: column; gap: 12px; }
-    label { font-size: 0.9rem; color: var(--muted); }
-    select, textarea, button, .input-text {
-      width: 100%;
-      font-family: inherit;
-    }
-    select, textarea {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #e6edf3;
-      background: #fff;
-    }
-    button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-danger:hover, .btn-primary:hover { filter: brightness(.95); }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .actions .left { display: flex; gap: 8px; align-items: center; }
-
-    /* --- NEW CSS FOR PREDICTION SECTION --- */
-    .aside-content {
-      position: relative; /* Establish context for absolute positioning */
-      height: 100%; /* Ensure the card takes its full height */
-      display: flex;
-      flex-direction: column;
-    }
-    .prediction-result {
-      position: absolute; /* Position relative to .aside-content */
-      bottom: 0;
-      right: 0;
-      padding: 10px 18px; /* Padding matches the card padding */
-      margin: 0;
-      width: 100%;
-      text-align: right;
-      font-size: 1.1rem;
-      color: var(--muted);
-      border-top: 1px solid #e6edf3; /* Separator line */
-      background: var(--card); /* Match card background */
-      border-bottom-left-radius: 12px;
-      border-bottom-right-radius: 12px;
-      font-weight: 600;
-    }
-    /* Push form content up to make space for the fixed footer/prediction */
-    .aside-card {
-      padding-bottom: 70px; /* Make space for the absolute-positioned footer/prediction */
-      height: 100%;
-    }
-    /* Make form take remaining space */
-    .message-form-wrapper { flex-grow: 1; }
-    /* --- END NEW CSS --- */
-
-
-    @media (max-width: 920px) {
-      .container { grid-template-columns: 1fr; }
-      .conversation { height: 420px; }
-      .aside-card { padding-bottom: 18px; } /* Reset padding for smaller screens if prediction is below */
-      .prediction-result { position: static; border-top: none; }
-    }
+    body { font-family: 'Inter', sans-serif; margin:0; padding:24px; background:#f6f8fb; color:#111; }
+    .container { max-width:900px; margin:0 auto; display:grid; grid-template-columns:1fr 360px; gap:20px; }
+    header { grid-column:1 / -1; margin-bottom:10px; }
+    .card { background:white; padding:16px; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.06); }
+    .conversation { height:480px; overflow:auto; display:flex; flex-direction:column; gap:12px; }
+    .message { padding:10px 14px; border-radius:12px; max-width:80%; }
+    .sent { background:#dcf8c6; align-self:flex-end; border-bottom-right-radius:4px; }
+    .received { background:#fff; align-self:flex-start; border-bottom-left-radius:4px; }
+    .meta { font-size:0.8rem; color:#666; margin-bottom:4px; }
+    .actions { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+    button { padding:8px 12px; border:none; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn-primary { background:#2563eb; color:white; }
+    .btn-danger { background:#ef4444; color:white; }
+    @media(max-width:920px){ .container{ grid-template-columns:1fr; } .conversation{ height:400px; } }
   </style>
 </head>
 <body>
@@ -147,130 +27,96 @@
     <header>
       <div class="card">
         <h1>Chat Between <strong>{{ users[0] }}</strong> and <strong>{{ users[1] }}</strong></h1>
-        <p style="margin:6px 0 0 0; color:var(--muted); font-size:0.95rem">
-          Select a sender & receiver, type a message and press Send.
-          Use <em>Clear chat</em> to delete all messages.
+        <p style="color:#666; font-size:0.9rem;">Share this link to chat: 
+          <strong>{{ request.url }}</strong>
         </p>
       </div>
     </header>
 
     <main class="card">
-      <h2 style="margin-top:0; font-size:1.05rem">Conversation</h2>
+      <h2>Conversation</h2>
       <div id="conversation" class="conversation">
         {% if messages|length == 0 %}
-          <div style="color:var(--muted); text-align:center; margin-top:40px">
-            No messages yet. Start the conversation!
-          </div>
+          <div style="color:#999;text-align:center;margin-top:40px;">No messages yet. Start chatting!</div>
         {% endif %}
         {% for msg in messages %}
-          {% if msg.sender == users[0] %}
-            <div class="message sent">
-              <div class="meta">
-                <strong>{{ msg.sender }}</strong> → {{ msg.receiver }} ·
-                <span style="color:var(--muted)">{{ msg.timestamp }}</span>
-              </div>
-              <div class="text">{{ msg.message }}</div>
-            </div>
-          {% else %}
-            <div class="message received">
-              <div class="meta">
-                <strong>{{ msg.sender }}</strong> → {{ msg.receiver }} ·
-                <span style="color:var(--muted)">{{ msg.timestamp }}</span>
-              </div>
-              <div class="text">{{ msg.message }}</div>
-            </div>
-          {% endif %}
+          <div class="message {% if msg.sender == users[0] %}sent{% else %}received{% endif %}">
+            <div class="meta"><strong>{{ msg.sender }}</strong> → {{ msg.receiver }} · {{ msg.timestamp }}</div>
+            <div class="text">{{ msg.message }}</div>
+          </div>
         {% endfor %}
       </div>
     </main>
 
-    <aside class="card aside-card">
-      <div class="aside-content">
-        <div class="message-form-wrapper">
-          <form method="POST" action="{{ url_for('index') }}">
-            <div>
-              <label for="sender">Sender</label>
-              <select id="sender" name="sender" required>
-                {% for user in users %}
-                <option value="{{ user }}">{{ user }}</option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div>
-              <label for="receiver">Receiver</label>
-              <select id="receiver" name="receiver" required>
-                {% for user in users %}
-                <option value="{{ user }}">{{ user }}</option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div>
-              <label for="message">Message</label>
-              <textarea id="message" name="message" rows="6" required placeholder="Write a short message..."></textarea>
-            </div>
-
-
-            <div class="actions">
-              <div class="left">
-                <button class="btn-primary" type="submit">Send</button>
-                <button class="btn-danger"
-                        type="submit"
-                        formmethod="post"
-                        formaction="{{ url_for('clear') }}"
-                        formnovalidate
-                        onclick="return confirm('Delete all messages? This cannot be undone.');">
-                  Clear chat
-                </button>
-              </div>
-              <div style="color:var(--muted); font-size:0.85rem">
-                Messages: <strong>{{ messages|length }}</strong>
-              </div>
-            </div>
-          </form>
+    <aside class="card">
+      <form id="chatForm">
+        <div>
+          <label>Sender</label>
+          <select id="sender" required>
+            {% for user in users %}
+              <option value="{{ user }}">{{ user }}</option>
+            {% endfor %}
+          </select>
         </div>
-
-        <div class="prediction-result">
-          <span style="color:#111827;">Predicted Duration:</span>
-          <span style="color:var(--accent); font-weight: 800; font-size: 1.25rem;">
-            {{ predicted_duration }}
-          </span>
-          months
+        <div>
+          <label>Receiver</label>
+          <select id="receiver" required>
+            {% for user in users %}
+              <option value="{{ user }}">{{ user }}</option>
+            {% endfor %}
+          </select>
         </div>
-      </div>
+        <div>
+          <label>Message</label>
+          <textarea id="message" rows="4" required></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn-primary">Send</button>
+          <button type="button" id="clearBtn" class="btn-danger">Clear Chat</button>
+        </div>
+      </form>
     </aside>
   </div>
 
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
-    // Auto-scroll conversation to bottom on load
-    (function(){
-      var conv = document.getElementById('conversation');
-      if(conv){ conv.scrollTop = conv.scrollHeight; }
-    })();
+    const socket = io();
+    const room = "{{ room_id }}";
+    socket.emit('join', { room, user: "{{ users[0] }}" });
 
-    // Prevent selecting same sender/receiver
-    (function(){
-      var sender = document.getElementById('sender');
-      var receiver = document.getElementById('receiver');
-      function sync() {
-        for (var i=0; i<receiver.options.length; i++){
-          receiver.options[i].disabled = receiver.options[i].value === sender.value;
-        }
-        if (receiver.value === sender.value) {
-          for (var j=0; j<receiver.options.length; j++){
-            if (!receiver.options[j].disabled) {
-              receiver.value = receiver.options[j].value;
-              break;
-            }
-          }
-        }
+    const convo = document.getElementById('conversation');
+    const form = document.getElementById('chatForm');
+    const msgInput = document.getElementById('message');
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const sender = document.getElementById('sender').value;
+      const receiver = document.getElementById('receiver').value;
+      const msg = msgInput.value.trim();
+      if(!msg) return;
+      socket.emit('send_message', { room, sender, receiver, message: msg });
+      msgInput.value = '';
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', ()=>{
+      if(confirm('Delete all messages in this room?')){
+        socket.emit('clear_room', { room });
+        convo.innerHTML = '<div style="color:#999;text-align:center;margin-top:40px;">No messages yet. Start chatting!</div>';
       }
-      if (sender && receiver) {
-        sender.addEventListener('change', sync);
-        window.addEventListener('load', sync);
-      }
-    })();
+    });
+
+    socket.on('new_message', (msg)=>{
+      const div = document.createElement('div');
+      div.className = 'message ' + (msg.sender === "{{ users[0] }}" ? 'sent' : 'received');
+      div.innerHTML = `<div class="meta"><strong>${msg.sender}</strong> → ${msg.receiver} · ${msg.timestamp}</div>
+                       <div class="text">${msg.message}</div>`;
+      convo.appendChild(div);
+      convo.scrollTop = convo.scrollHeight;
+    });
+
+    socket.on('cleared', ()=>{
+      convo.innerHTML = '<div style="color:#999;text-align:center;margin-top:40px;">Chat cleared.</div>';
+    });
   </script>
 </body>
 </html>
